@@ -3,6 +3,8 @@ package com.db.awmd.challenge;
 import com.db.awmd.challenge.domain.Account;
 import com.db.awmd.challenge.domain.Transfer;
 import com.db.awmd.challenge.exception.DuplicateAccountIdException;
+import com.db.awmd.challenge.exception.FundsNotEnoughException;
+import com.db.awmd.challenge.exception.SameAccountException;
 import com.db.awmd.challenge.service.AccountsService;
 import com.db.awmd.challenge.service.NotificationService;
 import org.junit.Test;
@@ -16,6 +18,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.verify;
 
@@ -32,7 +35,7 @@ public class AccountsServiceTest {
 
 
     @Test
-    public void addAccount() throws Exception {
+    public void addAccount()  {
         Account account = new Account("Id-123");
         account.setBalance(new BigDecimal(1000));
         this.accountsService.createAccount(account);
@@ -41,7 +44,7 @@ public class AccountsServiceTest {
     }
 
     @Test
-    public void addAccount_failsOnDuplicateId() throws Exception {
+    public void addAccount_failsOnDuplicateId()  {
         String uniqueId = "Id-" + System.currentTimeMillis();
         Account account = new Account(uniqueId);
         this.accountsService.createAccount(account);
@@ -71,6 +74,32 @@ public class AccountsServiceTest {
 
         verify(notificationService, Mockito.times(1)).notifyAboutTransfer(accountFrom, "Debited " + transferAmount + " from account " + accountFrom.getAccountId());
         verify(notificationService, Mockito.times(1)).notifyAboutTransfer(accountTo, "Credited " + transferAmount + " to account " + transferAmount);
+    }
+
+    @Test(expected = SameAccountException.class)
+    public void transferSameAccount() {
+        Account accountFrom = new Account(UUID.randomUUID().toString(), new BigDecimal("100"));
+
+        this.accountsService.createAccount(accountFrom);
+
+        BigDecimal transferAmount = new BigDecimal("50");
+        Transfer transfer = new Transfer(accountFrom.getAccountId(), accountFrom.getAccountId(), transferAmount);
+
+        this.accountsService.transfer(transfer);
+    }
+
+    @Test(expected = FundsNotEnoughException.class)
+    public void transferFundsNotEnough() {
+        Account accountFrom = new Account(UUID.randomUUID().toString(), new BigDecimal("100"));
+        Account accountTo = new Account(UUID.randomUUID().toString(), new BigDecimal("200"));
+
+        this.accountsService.createAccount(accountFrom);
+        this.accountsService.createAccount(accountTo);
+
+        BigDecimal transferAmount = new BigDecimal("300");
+        Transfer transfer = new Transfer(accountFrom.getAccountId(), accountTo.getAccountId(), transferAmount);
+
+        this.accountsService.transfer(transfer);
     }
 
 }
