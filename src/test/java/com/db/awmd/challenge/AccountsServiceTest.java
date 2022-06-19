@@ -18,7 +18,6 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.verify;
 
@@ -35,7 +34,7 @@ public class AccountsServiceTest {
 
 
     @Test
-    public void addAccount()  {
+    public void addAccount() {
         Account account = new Account("Id-123");
         account.setBalance(new BigDecimal(1000));
         this.accountsService.createAccount(account);
@@ -44,7 +43,7 @@ public class AccountsServiceTest {
     }
 
     @Test
-    public void addAccount_failsOnDuplicateId()  {
+    public void addAccount_failsOnDuplicateId() {
         String uniqueId = "Id-" + System.currentTimeMillis();
         Account account = new Account(uniqueId);
         this.accountsService.createAccount(account);
